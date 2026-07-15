@@ -185,6 +185,11 @@ export const StudentProfile: React.FC<Props> = ({ student, selectedBookId }) => 
     }
   }
 
+  const allOrderedChapters = CURRICULUM_BNU.flatMap(book => book.chapters.map(c => c.name));
+  filteredProgression.sort((a, b) => {
+    return allOrderedChapters.indexOf(a.chapterName) - allOrderedChapters.indexOf(b.chapterName);
+  });
+
   const progChapters = filteredProgression.map(p => {
     // 简短化章节名称，例如“第一章”
     const match = p.chapterName.match(/第(.)章/);
@@ -201,7 +206,11 @@ export const StudentProfile: React.FC<Props> = ({ student, selectedBookId }) => 
   
   const progOption = {
     tooltip: { trigger: 'axis' },
-    grid: { left: '10%', right: '5%', bottom: '15%', top: '10%' },
+    grid: { left: '10%', right: '5%', bottom: '25%', top: '10%' },
+    dataZoom: [
+      { type: 'inside', start: 0, end: 100 },
+      { type: 'slider', height: 20, bottom: 5, textStyle: { color: '#9ca3af' } }
+    ],
     xAxis: { 
       type: 'category', 
       data: progChapters, 
