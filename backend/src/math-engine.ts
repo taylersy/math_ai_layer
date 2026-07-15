@@ -94,47 +94,86 @@ function processMatrixForChapter(students: StudentData[], chapIdx: number) {
 
   const S_matrix = Matrix.sub(M, L);
   
-  const lAverages = [];
+  const studentFeatures = [];
+  let minL = Infinity;
+  let maxL = -Infinity;
+  let minV = Infinity;
+  let maxV = -Infinity;
+
   for (let i = 0; i < M.rows; i++) {
-    let sum = 0;
-    for (let j = 0; j < M.columns; j++) {
-      sum += L.get(i, j);
-    }
-    lAverages.push(sum / M.columns);
-  }
-  
-  const minL = Math.min(...lAverages);
-  const maxL = Math.max(...lAverages);
-  const range = maxL - minL || 1; 
-
-  const results = [];
-  for (let i = 0; i < students.length; i++) {
-    const lAvg = lAverages[i];
-    let tier = '理解层';
-    if (lAvg >= minL + 0.75 * range) tier = '反思层';
-    else if (lAvg >= minL + 0.5 * range) tier = '表达层';
-    else if (lAvg >= minL + 0.25 * range) tier = '运用层';
-
+    let lSum = 0;
+    let negS_sum = 0;
     let minAnomaly = 0;
     let anomalyCol = -1;
     const lVector = [];
-    
+
     for (let j = 0; j < M.columns; j++) {
+      lSum += L.get(i, j);
       const sVal = S_matrix.get(i, j);
+      if (sVal < 0) {
+        // Mean squared negative anomaly penalizes large unexpected drops
+        negS_sum += sVal * sVal; 
+      }
       if (sVal < minAnomaly) {
         minAnomaly = sVal;
         anomalyCol = j;
       }
       lVector.push(Math.round(L.get(i, j) * 100) / 100);
     }
+    
+    const lAvg = lSum / M.columns;
+    const vVal = Math.sqrt(negS_sum / M.columns); // RMSE of negative anomalies (Volatility)
+
+    studentFeatures.push({
+      lAvg,
+      vVal,
+      minAnomaly,
+      anomalyCol,
+      lVector
+    });
+
+    if (lAvg < minL) minL = lAvg;
+    if (lAvg > maxL) maxL = lAvg;
+    if (vVal < minV) minV = vVal;
+    if (vVal > maxV) maxV = vVal;
+  }
+
+  const lRange = maxL - minL || 1;
+  const vRange = maxV - minV || 1;
+
+  // 定义二维 L-S 空间的语义聚类锚点 (Normalized space: L, V)
+  const centroids = [
+    { tier: '理解层', l: 0.1, v: 0.2 }, // 基础极度薄弱且稳定的差（概念模糊）
+    { tier: '运用层', l: 0.5, v: 0.9 }, // 基础中等但极其不稳定（会例题但不会迁移）
+    { tier: '表达层', l: 0.7, v: 0.3 }, // 基础较好且较为稳定（能独立解题但稍欠火候）
+    { tier: '反思层', l: 0.9, v: 0.1 }  // 基础极好且极其稳定（具备规律总结与元认知能力）
+  ];
+
+  const results = [];
+  for (let i = 0; i < students.length; i++) {
+    const feature = studentFeatures[i];
+    const lNorm = (feature.lAvg - minL) / lRange;
+    const vNorm = (feature.vVal - minV) / vRange;
+
+    let minDistance = Infinity;
+    let assignedTier = '理解层';
+
+    for (const c of centroids) {
+      // 欧式距离聚类分类
+      const dist = Math.sqrt(Math.pow(lNorm - c.l, 2) + Math.pow(vNorm - c.v, 2));
+      if (dist < minDistance) {
+        minDistance = dist;
+        assignedTier = c.tier;
+      }
+    }
 
     results.push({
-      tier,
-      lAvg: Math.round(lAvg * 100) / 100,
-      minAnomaly: Math.round(minAnomaly * 100) / 100,
-      anomalyCol,
+      tier: assignedTier,
+      lAvg: Math.round(feature.lAvg * 100) / 100,
+      minAnomaly: Math.round(feature.minAnomaly * 100) / 100,
+      anomalyCol: feature.anomalyCol,
       rawScores: imputedData[i].map(v => Math.round(v * 100) / 100),
-      lVector
+      lVector: feature.lVector
     });
   }
 
