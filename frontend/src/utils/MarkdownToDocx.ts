@@ -84,7 +84,6 @@ export async function generateDocx(markdown: string, config?: Partial<ExportConf
                             line: lineSpacingTwips,
                             lineRule: "auto",
                         },
-                        alignment: AlignmentType.LEFT,
                     },
                 },
             },
@@ -262,7 +261,7 @@ function parseMarkdown(markdown: string, config: ExportConfig): any[] {
         bold?: boolean,
         italic?: boolean,
     } = {}) => {
-        const text = lines.join('<br>');
+        const text = lines.join(' ');
         if (!text.trim()) return null;
 
         const inlineOptions: any = {};
