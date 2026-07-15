@@ -77,7 +77,7 @@ export const RecommendationUI: React.FC<Props> = ({ teacherId, students, type })
     setResultText('');
 
     try {
-      const res = await fetch('http://localhost:8787/api/recommend', {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/recommend`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

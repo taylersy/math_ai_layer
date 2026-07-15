@@ -38,7 +38,7 @@ function App() {
   const fetchStudents = async () => {
     if (!teacherId) return;
     try {
-      const res = await fetch(`http://localhost:8787/api/students?teacherId=${teacherId}`);
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students?teacherId=${teacherId}`);
       const data = await res.json();
       if (data.data && data.data.length > 0) {
         setStudents(data.data);
@@ -67,7 +67,7 @@ function App() {
 
     try {
       const endpoint = isRegisterMode ? '/api/register' : '/api/login';
-      const res = await fetch(`http://localhost:8787${endpoint}`, {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ teacherId, password })

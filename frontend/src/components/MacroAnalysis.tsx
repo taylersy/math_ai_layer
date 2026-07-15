@@ -85,7 +85,7 @@ export const MacroAnalysis: React.FC<Props> = ({ teacherId, students }) => {
     setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
     try {
-      const res = await fetch('http://localhost:8787/api/chat/macro', {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/chat/macro`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

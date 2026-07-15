@@ -114,7 +114,7 @@ export const Uploader: React.FC<UploaderProps> = ({ onUploadSuccess, selectedBoo
 
       if (students.length === 0) throw new Error('未解析到有效数据，请检查文件内容或表头是否包含“学号”');
 
-      const url = source === 'calendar' ? 'http://localhost:8787/api/upload/zyrl' : 'http://localhost:8787/api/upload/zxw';
+      const url = source === 'calendar' ? `${import.meta.env.VITE_BACKEND_URL}/api/upload/zyrl` : `${import.meta.env.VITE_BACKEND_URL}/api/upload/zxw`;
       
       const res = await fetch(url, {
         method: 'POST',

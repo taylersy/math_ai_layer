@@ -52,7 +52,7 @@ export const ChatSession: React.FC<Props> = ({ student }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8787/api/analyze', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
