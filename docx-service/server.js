@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
+const AdmZip = require('adm-zip');
 
 const app = express();
 app.use(cors());
@@ -50,6 +51,31 @@ app.post('/api/export/docx', (req, res) => {
         // 清理
         fs.unlink(mdPath, () => {});
         return res.status(500).json({ error: 'Failed to convert to docx via Pandoc' });
+      }
+
+      try {
+        // 修复 WPS Office 渲染 Pandoc OMML 公式时，嵌套数字丢失/不可见的 Bug
+        // Pandoc 3 依然不会给纯数字加上明确的数学字体标签，这导致 WPS 解析时将其置空
+        const zip = new AdmZip(docxPath);
+        
+        let settingsXml = zip.readAsText('word/settings.xml');
+        if (settingsXml && !settingsXml.includes('m:mathFont')) {
+          settingsXml = settingsXml.replace('</w:settings>', '<m:mathPr><m:mathFont m:val="Cambria Math"/></m:mathPr></w:settings>');
+          zip.updateFile('word/settings.xml', Buffer.from(settingsXml, 'utf8'));
+        }
+        
+        let docXml = zip.readAsText('word/document.xml');
+        if (docXml) {
+          // 1. 给没有 <m:rPr> 的 <m:r> 加上包含字体声明的 <m:rPr>
+          docXml = docXml.replace(/<m:r>(?!\s*<m:rPr>)/g, '<m:r><m:rPr><m:rFonts m:math="Cambria Math" m:ascii="Cambria Math" m:hAnsi="Cambria Math" m:cs="Cambria Math"/></m:rPr>');
+          // 2. 给已经有 <m:rPr> 但没有 <m:rFonts> 的加上字体声明
+          docXml = docXml.replace(/<m:rPr>(?!\s*<m:rFonts)/g, '<m:rPr><m:rFonts m:math="Cambria Math" m:ascii="Cambria Math" m:hAnsi="Cambria Math" m:cs="Cambria Math"/>');
+          zip.updateFile('word/document.xml', Buffer.from(docXml, 'utf8'));
+        }
+        
+        zip.writeZip(docxPath);
+      } catch (patchErr) {
+        console.error('Failed to patch docx for WPS:', patchErr);
       }
 
       // 将生成的 docx 作为流发送给前端
