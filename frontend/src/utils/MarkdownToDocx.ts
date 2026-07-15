@@ -84,6 +84,7 @@ export async function generateDocx(markdown: string, config?: Partial<ExportConf
                             line: lineSpacingTwips,
                             lineRule: "auto",
                         },
+                        alignment: AlignmentType.LEFT,
                     },
                 },
             },

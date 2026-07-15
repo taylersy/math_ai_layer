@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Send, User } from 'lucide-react';
+import { Bot, Send, User, Copy, Trash2, Check } from 'lucide-react';
 import { marked } from 'marked';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
@@ -51,7 +51,26 @@ export const ChatSession: React.FC<Props> = ({ student }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+
+  const handleCopy = (content: string, idx: number) => {
+    navigator.clipboard.writeText(content);
+    setCopiedIdx(idx);
+    setTimeout(() => setCopiedIdx(null), 2000);
+  };
+
+  const handleDelete = (idx: number) => {
+    setMessages(prev => {
+      const newMessages = [...prev];
+      if (idx > 0 && newMessages[idx - 1].role === 'user') {
+        newMessages.splice(idx - 1, 2);
+      } else {
+        newMessages.splice(idx, 1);
+      }
+      return newMessages;
+    });
+  };
 
   useEffect(() => {
     // Reset chat when student changes
@@ -160,19 +179,41 @@ export const ChatSession: React.FC<Props> = ({ student }) => {
               }`}>
                 {msg.role === 'user' ? <User className="w-4 h-4 text-gray-300" /> : <Bot className="w-4 h-4 text-primary" />}
               </div>
-              <div className={`p-3 rounded-2xl text-sm leading-relaxed ${
-                msg.role === 'user' ? 'bg-primary text-white rounded-tr-sm' : 'bg-gray-800/60 text-gray-300 border border-gray-700/50 rounded-tl-sm prose prose-invert prose-sm max-w-none'
-              }`}>
-                {msg.role === 'user' ? (
-                  <div className="whitespace-pre-wrap">{msg.content}</div>
-                ) : (
-                  <div 
-                    className="markdown-body" 
-                    dangerouslySetInnerHTML={{ __html: renderMarkdownWithMath(msg.content) }} 
-                  />
-                )}
-                {loading && idx === messages.length - 1 && msg.role === 'assistant' && (
-                  <span className="inline-block w-1.5 h-4 ml-1 bg-primary animate-pulse"></span>
+              <div className="flex flex-col">
+                <div className={`p-3 rounded-2xl text-sm leading-relaxed ${
+                  msg.role === 'user' ? 'bg-primary text-white rounded-tr-sm' : 'bg-gray-800/60 text-gray-300 border border-gray-700/50 rounded-tl-sm prose prose-invert prose-sm max-w-none'
+                }`}>
+                  {msg.role === 'user' ? (
+                    <div className="whitespace-pre-wrap">{msg.content}</div>
+                  ) : (
+                    <div 
+                      className="markdown-body" 
+                      dangerouslySetInnerHTML={{ __html: renderMarkdownWithMath(msg.content) }} 
+                    />
+                  )}
+                  {loading && idx === messages.length - 1 && msg.role === 'assistant' && (
+                    <span className="inline-block w-1.5 h-4 ml-1 bg-primary animate-pulse"></span>
+                  )}
+                </div>
+                {msg.role === 'assistant' && !loading && (
+                  <div className="flex items-center space-x-3 mt-1 ml-1 text-gray-500">
+                    <button 
+                      onClick={() => handleCopy(msg.content, idx)}
+                      className="flex items-center space-x-1 hover:text-gray-300 transition-colors"
+                      title="复制回复"
+                    >
+                      {copiedIdx === idx ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span className="text-[10px]">{copiedIdx === idx ? '已复制' : '复制'}</span>
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(idx)}
+                      className="flex items-center space-x-1 hover:text-red-400 transition-colors"
+                      title="删除该回复及提问"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span className="text-[10px]">删除</span>
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
