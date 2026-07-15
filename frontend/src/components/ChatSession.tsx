@@ -31,7 +31,7 @@ export const ChatSession: React.FC<Props> = ({ student }) => {
     if (student) {
       setMessages([{
         role: 'assistant',
-        content: `你好，我是 Math-AI 学情助教。我已经读取了 **${student.name}** 的 L/S 矩阵数据（当前落点：${student.tier_level}）。你可以向我询问关于他/她的具体学情分析、提问技巧或是专属变式题。`
+        content: `你好，我是个性化学情智能体。我已经读取了 **${student.name}** 的 L/S 矩阵数据（当前落点：${student.tier_level}）。你可以向我询问关于他/她的具体学情分析、提问技巧或是专属变式题。`
       }]);
     } else {
       setMessages([]);
@@ -119,7 +119,7 @@ export const ChatSession: React.FC<Props> = ({ student }) => {
           <Bot className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h2 className="text-sm font-bold text-gray-200">AI 学情 Copilot</h2>
+          <h2 className="text-sm font-bold text-gray-200">个性化学情智能体</h2>
           <p className="text-xs text-gray-500">正在分析: {student.name}</p>
         </div>
       </div>
