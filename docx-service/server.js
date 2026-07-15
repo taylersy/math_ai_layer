@@ -5,7 +5,6 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
-const AdmZip = require('adm-zip');
 
 const app = express();
 app.use(cors());
@@ -51,29 +50,6 @@ app.post('/api/export/docx', (req, res) => {
         // 清理
         fs.unlink(mdPath, () => {});
         return res.status(500).json({ error: 'Failed to convert to docx via Pandoc' });
-      }
-
-      try {
-        // 修复 WPS Office 渲染 Pandoc OMML 公式时，数字丢失/不可见的 Bug
-        const zip = new AdmZip(docxPath);
-        
-        // 1. 修复 settings.xml，强制声明 MathFont
-        let settingsXml = zip.readAsText('word/settings.xml');
-        if (settingsXml && !settingsXml.includes('m:mathFont')) {
-          settingsXml = settingsXml.replace('</w:settings>', '<m:mathPr><m:mathFont m:val="Cambria Math"/></m:mathPr></w:settings>');
-          zip.updateFile('word/settings.xml', Buffer.from(settingsXml, 'utf8'));
-        }
-        
-        // 2. 修复 document.xml，为没有 <m:rPr> 的数学字符 <m:r> 强制注入字体属性，防止 WPS 丢字
-        let docXml = zip.readAsText('word/document.xml');
-        if (docXml) {
-          docXml = docXml.replace(/<m:r>(?!\s*<m:rPr>)/g, '<m:r><m:rPr><m:rFonts m:ascii="Cambria Math" m:hAnsi="Cambria Math" m:cs="Cambria Math"/></m:rPr>');
-          zip.updateFile('word/document.xml', Buffer.from(docXml, 'utf8'));
-        }
-        
-        zip.writeZip(docxPath);
-      } catch (patchErr) {
-        console.error('Failed to patch docx for WPS:', patchErr);
       }
 
       // 将生成的 docx 作为流发送给前端
