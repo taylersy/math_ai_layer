@@ -4,6 +4,7 @@ import { BrainCircuit, BookOpen, Download, Loader2, Save } from 'lucide-react';
 import { marked } from 'marked';
 import katex from 'katex';
 import { saveAs } from 'file-saver';
+import { generateDocx } from '../utils/MarkdownToDocx';
 import 'katex/dist/katex.min.css';
 import { getStudentMetrics } from '../utils/studentMetrics';
 
@@ -30,22 +31,14 @@ const renderMarkdownWithMath = (text: string) => {
   return marked(processedText) as string;
 };
 
-// 导出为真正的 Word (使用后端的 Pandoc 微服务)
+// 导出为真正的 Word (使用原生前端转换引擎)
 const exportToWord = async (markdownText: string, title: string) => {
   try {
-    const res = await fetch('https://math-docx-service.onrender.com/api/export/docx', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ markdown: markdownText, title })
-    });
-
-    if (!res.ok) throw new Error('导出失败');
-
-    const blob = await res.blob();
+    const blob = await generateDocx(markdownText);
     saveAs(blob, `${title}.docx`);
   } catch (error) {
     console.error('Export error:', error);
-    alert('导出失败，请检查文档微服务是否在端口 8789 上启动。');
+    alert('导出失败，请检查转换引擎配置。');
   }
 };
 

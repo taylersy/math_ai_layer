@@ -71,7 +71,9 @@ export const ChatSession: React.FC<Props> = ({ student }) => {
         try {
           const errData = await response.json();
           if (errData.error) errStr = errData.error;
-        } catch (e) {}
+        } catch (e) {
+          console.error(e);
+        }
         throw new Error(errStr);
       }
 

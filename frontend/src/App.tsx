@@ -6,7 +6,7 @@ import { ChatSession } from './components/ChatSession';
 import { ClassTaskRec } from './components/ClassTaskRec';
 import { HomeworkRec } from './components/HomeworkRec';
 import { MacroAnalysis } from './components/MacroAnalysis';
-import { Activity, LayoutDashboard, Settings, BookOpen, User } from 'lucide-react';
+import { Activity, LayoutDashboard, BookOpen, User } from 'lucide-react';
 import { CURRICULUM_BNU } from './curriculum';
 
 interface StudentData {
@@ -34,6 +34,7 @@ function App() {
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [hasData, setHasData] = useState(false);
 
   const fetchStudents = async () => {
     if (!teacherId) return;
@@ -47,6 +48,7 @@ function App() {
           if (updated) setSelectedStudent(updated);
         }
         setShowUploader(false);
+        setHasData(true);
       }
     } catch (e) {
       console.error(e);
@@ -55,6 +57,7 @@ function App() {
 
   useEffect(() => {
     if (isLoggedIn) fetchStudents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoggedIn, selectedBookId]);
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -79,6 +82,7 @@ function App() {
         setLoginError(data.error || '验证失败');
       }
     } catch (e: any) {
+      console.error(e);
       setLoginError('服务器连接失败');
     }
   };
