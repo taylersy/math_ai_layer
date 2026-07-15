@@ -161,6 +161,20 @@ export const StudentProfile: React.FC<Props> = ({ student, selectedBookId }) => 
     ]
   };
 
+  // 辅助函数：根据章节名找到对应的书名简称
+  const getBookNameForChapter = (chapterName: string) => {
+    for (const book of CURRICULUM_BNU) {
+      if (book.chapters.some(c => c.name === chapterName)) {
+        const match = book.name.match(/([七八九]年级)([上下]册)/);
+        if (match) {
+           return match[1].charAt(0) + match[2].charAt(0);
+        }
+        return book.name;
+      }
+    }
+    return '';
+  };
+
   // Progression Line Chart Data
   let filteredProgression = student.progression || [];
   if (selectedBookId && selectedBookId !== 'all') {
@@ -174,14 +188,37 @@ export const StudentProfile: React.FC<Props> = ({ student, selectedBookId }) => 
   const progChapters = filteredProgression.map(p => {
     // 简短化章节名称，例如“第一章”
     const match = p.chapterName.match(/第(.)章/);
-    return match ? match[0] : p.chapterName;
+    let shortName = match ? match[0] : p.chapterName;
+    if (!selectedBookId || selectedBookId === 'all') {
+      const bookName = getBookNameForChapter(p.chapterName);
+      if (bookName) {
+        shortName += `\n{bookLabel|${bookName}}`;
+      }
+    }
+    return shortName;
   });
   const progLScores = filteredProgression.map(p => p.lScore);
   
   const progOption = {
     tooltip: { trigger: 'axis' },
     grid: { left: '10%', right: '5%', bottom: '15%', top: '10%' },
-    xAxis: { type: 'category', data: progChapters, axisLabel: { color: '#9ca3af', interval: 'auto', rotate: 30 }, axisLine: { lineStyle: { color: '#374151' } } },
+    xAxis: { 
+      type: 'category', 
+      data: progChapters, 
+      axisLabel: { 
+        color: '#9ca3af', 
+        interval: 'auto', 
+        rotate: 30,
+        rich: {
+          bookLabel: {
+            color: '#60a5fa',
+            fontSize: 10,
+            padding: [2, 0, 0, 0]
+          }
+        }
+      }, 
+      axisLine: { lineStyle: { color: '#374151' } } 
+    },
     yAxis: { type: 'value', min: 40, max: 100, axisLabel: { color: '#9ca3af' }, splitLine: { lineStyle: { color: '#1f2937', type: 'dashed' } } },
     series: [
       {
@@ -230,7 +267,7 @@ export const StudentProfile: React.FC<Props> = ({ student, selectedBookId }) => 
   if (filteredKG) {
     filteredKG.forEach(c => {
       if (c.unitTest) {
-        allExams.push({ ...c.unitTest, type: 'ZYRL', ts: parseDate(c.unitTest.date) });
+        allExams.push({ ...c.unitTest, type: 'ZYRL', ts: parseDate(c.unitTest.date), chapterName: c.chapterName });
       }
     });
   }
@@ -247,12 +284,25 @@ export const StudentProfile: React.FC<Props> = ({ student, selectedBookId }) => 
   // 简短化标签
   const scoreNames = allExams.map(e => {
     let shortName = e.name;
+    let originalChapterName = e.chapterName;
     if (shortName.includes('测验')) {
       const match = shortName.match(/第(.)章/);
       shortName = match ? match[0] + '测' : shortName;
     }
     // 控制标签长度
     if (shortName.length > 8) shortName = shortName.substring(0, 8) + '...';
+
+    if (!selectedBookId || selectedBookId === 'all') {
+      if (originalChapterName) {
+        const bookName = getBookNameForChapter(originalChapterName);
+        if (bookName) {
+          shortName += `\n{bookLabel|${bookName}}`;
+        }
+      } else if (e.type === 'ZXW') {
+        shortName += `\n{bookLabel|大考}`;
+      }
+    }
+
     return `${shortName}\n${e.date}`;
   });
   const scoreValues = allExams.map(e => e.score);
@@ -267,7 +317,19 @@ export const StudentProfile: React.FC<Props> = ({ student, selectedBookId }) => 
     xAxis: {
       type: 'category',
       data: scoreNames,
-      axisLabel: { color: '#9ca3af', interval: 'auto', rotate: 45, fontSize: 10 },
+      axisLabel: { 
+        color: '#9ca3af', 
+        interval: 'auto', 
+        rotate: 45, 
+        fontSize: 10,
+        rich: {
+          bookLabel: {
+            color: '#fcd34d',
+            fontSize: 9,
+            padding: [2, 0, 0, 0]
+          }
+        }
+      },
       axisLine: { lineStyle: { color: '#374151' } }
     },
     yAxis: {
