@@ -223,6 +223,7 @@ function App() {
                   students={students} 
                   selectedId={selectedStudent?.id || null} 
                   onSelect={setSelectedStudent} 
+                  selectedBookId={selectedBookId}
                 />
               </div>
 
@@ -241,19 +242,19 @@ function App() {
 
         {currentView === 'macro' && (
           <div className="flex-1 flex overflow-hidden p-6">
-            <MacroAnalysis students={students} teacherId={teacherId} />
+            <MacroAnalysis students={students} teacherId={teacherId} selectedBookId={selectedBookId} />
           </div>
         )}
 
         {currentView === 'task' && (
           <div className="flex-1 flex overflow-hidden p-6">
-            <ClassTaskRec teacherId={teacherId} students={students} />
+            <ClassTaskRec teacherId={teacherId} students={students} selectedBookId={selectedBookId} />
           </div>
         )}
 
         {currentView === 'homework' && (
           <div className="flex-1 flex overflow-hidden p-6">
-            <HomeworkRec teacherId={teacherId} students={students} />
+            <HomeworkRec teacherId={teacherId} students={students} selectedBookId={selectedBookId} />
           </div>
         )}
 

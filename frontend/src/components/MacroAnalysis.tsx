@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { ActivitySquare, Bot, Users, BarChart3, Loader2, Send, User, BrainCircuit } from 'lucide-react';
 import { marked } from 'marked';
+import { getStudentMetrics } from '../utils/studentMetrics';
 
 interface Props {
   teacherId: string;
   students: any[];
+  selectedBookId?: string;
 }
 
 interface Message {
@@ -13,7 +15,7 @@ interface Message {
   content: string;
 }
 
-export const MacroAnalysis: React.FC<Props> = ({ teacherId, students }) => {
+export const MacroAnalysis: React.FC<Props> = ({ teacherId, students, selectedBookId }) => {
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -34,11 +36,16 @@ export const MacroAnalysis: React.FC<Props> = ({ teacherId, students }) => {
     );
   }
 
+  const dynamicStudents = students.map(s => {
+    const metrics = getStudentMetrics(s, selectedBookId);
+    return { ...s, dynamicTier: metrics.tier, dynamicScore: metrics.lScore };
+  });
+
   const classStats = {
-    total: students.length,
-    avgLScore: Math.round(students.reduce((acc, s) => acc + (s.base_l_score || 0), 0) / students.length),
-    tiers: students.reduce((acc: any, s: any) => {
-      acc[s.tier_level] = (acc[s.tier_level] || 0) + 1;
+    total: dynamicStudents.length,
+    avgLScore: Math.round(dynamicStudents.reduce((acc, s) => acc + (s.dynamicScore || 0), 0) / dynamicStudents.length),
+    tiers: dynamicStudents.reduce((acc: any, s: any) => {
+      acc[s.dynamicTier] = (acc[s.dynamicTier] || 0) + 1;
       return acc;
     }, {})
   };

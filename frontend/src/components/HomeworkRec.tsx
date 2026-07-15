@@ -4,8 +4,9 @@ import { RecommendationUI } from './RecommendationUI';
 interface Props {
   teacherId: string;
   students: any[];
+  selectedBookId?: string;
 }
 
-export const HomeworkRec: React.FC<Props> = ({ teacherId, students }) => {
-  return <RecommendationUI teacherId={teacherId} students={students} type="homework" />;
+export const HomeworkRec: React.FC<Props> = ({ teacherId, students, selectedBookId }) => {
+  return <RecommendationUI teacherId={teacherId} students={students} type="homework" selectedBookId={selectedBookId} />;
 };

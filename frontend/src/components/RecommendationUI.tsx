@@ -5,6 +5,7 @@ import { marked } from 'marked';
 import katex from 'katex';
 import { saveAs } from 'file-saver';
 import 'katex/dist/katex.min.css';
+import { getStudentMetrics } from '../utils/studentMetrics';
 
 // 解析 markdown 中的数学公式
 const renderMarkdownWithMath = (text: string) => {
@@ -52,9 +53,10 @@ interface Props {
   teacherId: string;
   students: any[];
   type: 'task' | 'homework';
+  selectedBookId?: string;
 }
 
-export const RecommendationUI: React.FC<Props> = ({ teacherId, students, type }) => {
+export const RecommendationUI: React.FC<Props> = ({ teacherId, students, type, selectedBookId }) => {
   const [selectedBook, setSelectedBook] = useState(CURRICULUM_BNU[3]); // 默认八下
   const [selectedChapter, setSelectedChapter] = useState(CURRICULUM_BNU[3].chapters[0]);
   const [selectedSection, setSelectedSection] = useState(CURRICULUM_BNU[3].chapters[0].sections[0]);
@@ -64,10 +66,15 @@ export const RecommendationUI: React.FC<Props> = ({ teacherId, students, type })
   
   const title = type === 'task' ? '分层课堂任务推荐' : '分层课后作业推荐';
 
+  const dynamicStudents = students.map(s => {
+    const metrics = getStudentMetrics(s, selectedBookId);
+    return { ...s, dynamicTier: metrics.tier, dynamicScore: metrics.lScore };
+  });
+
   const classStats = {
-    total: students.length,
-    tiers: students.reduce((acc: any, s: any) => {
-      acc[s.tier_level] = (acc[s.tier_level] || 0) + 1;
+    total: dynamicStudents.length,
+    tiers: dynamicStudents.reduce((acc: any, s: any) => {
+      acc[s.dynamicTier] = (acc[s.dynamicTier] || 0) + 1;
       return acc;
     }, {})
   };

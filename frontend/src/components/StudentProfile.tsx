@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
+import { getStudentMetrics } from '../utils/studentMetrics';
 import ReactECharts from 'echarts-for-react';
 import { AlertCircle, BrainCircuit, Printer, Maximize2, X } from 'lucide-react';
 import { CURRICULUM_BNU } from '../curriculum';
@@ -292,6 +293,8 @@ export const StudentProfile: React.FC<Props> = ({ student, selectedBookId }) => 
     ]
   };
 
+  const { lScore: dynamicScore, tier: dynamicTier } = buildFullCurriculumTree() ? getStudentMetrics(student as any, selectedBookId) : { lScore: 0, tier: 'N/A' };
+
   return (
     <div className="flex flex-col h-full bg-surface-dark/60 rounded-2xl border border-gray-800/80 backdrop-blur-xl p-6 overflow-y-auto printable-area">
       
@@ -306,14 +309,14 @@ export const StudentProfile: React.FC<Props> = ({ student, selectedBookId }) => 
           </h2>
           <div className="flex items-center space-x-2 text-sm">
             <span className="px-2 py-1 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold">
-              当前阶层：{student.tier_level}
+              当前阶层：{dynamicTier}
             </span>
-            <span className="text-gray-400">最新 L 基底: {student.base_l_score}</span>
+            <span className="text-gray-400">当前视角基底: {dynamicScore}</span>
           </div>
         </div>
         <div className="text-right">
           <div className="text-5xl font-black bg-gradient-to-br from-white to-gray-500 bg-clip-text text-transparent">
-            {student.base_l_score}
+            {dynamicScore}
           </div>
           <div className="text-xs text-gray-500 font-bold tracking-widest mt-1">L SCORE</div>
         </div>
