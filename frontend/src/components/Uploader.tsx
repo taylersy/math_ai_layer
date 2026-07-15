@@ -80,7 +80,10 @@ export const Uploader: React.FC<UploaderProps> = ({ onUploadSuccess, selectedBoo
 
               chapData.sections.push({
                 sectionName: sec.name,
-                score: scoreCount > 0 ? totalScore / scoreCount : null
+                score: scoreCount > 0 ? totalScore / scoreCount : null,
+                taskGrade: task || null,
+                hwGrade: hw || null,
+                correctionGrade: correction || null
               });
             }
             studentData.chapters.push(chapData);

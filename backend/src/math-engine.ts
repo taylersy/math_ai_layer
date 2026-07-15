@@ -3,6 +3,9 @@ import { Matrix, SVD } from 'ml-matrix';
 export interface SectionScore {
   sectionName: string;
   score: number | null;
+  taskGrade?: string | null;
+  hwGrade?: string | null;
+  correctionGrade?: string | null;
 }
 
 export interface ChapterScore {
@@ -29,6 +32,7 @@ export interface KnowledgeNode {
   lScore: number;
   sScore: number;
   tier: string;
+  progressionEvent?: string;
 }
 
 export interface MathEngineResult {
@@ -171,6 +175,7 @@ function processMatrixForChapter(students: StudentData[], chapIdx: number) {
 
     const sectionTiers = [];
     const sVector = [];
+    const progressionEvents = [];
     const TIER_LEVELS = ['理解层', '运用层', '表达层', '反思层'];
     const baseTierIdx = TIER_LEVELS.indexOf(assignedTier);
 
@@ -183,8 +188,33 @@ function processMatrixForChapter(students: StudentData[], chapIdx: number) {
       else if (sVal < -15) drop = 2;
       else if (sVal < -8) drop = 1;
 
-      const localTierIdx = Math.max(0, baseTierIdx - drop);
+      let localTierIdx = Math.max(0, baseTierIdx - drop);
+      let event = undefined;
+
+      // 方案三：动态课堂进阶机制 (Scaffolding Fading)
+      const secData = students[i].chapters[chapIdx].sections[j];
+      
+      // 1. 课堂任务完成得好 -> 具备升层潜力 (跃迁)
+      if (secData.taskGrade && ['优秀', 'A+', 'A', 'A-'].includes(secData.taskGrade)) {
+        if (localTierIdx < 3) {
+          localTierIdx += 1;
+          event = '🌟 课中跃迁：课堂任务优秀，展现进阶潜力';
+        }
+      }
+      
+      // 2. 作业完成得不好 -> 没有巩固住 -> 打回原形或降级
+      if (secData.hwGrade && ['C', '不合格', '未交'].includes(secData.hwGrade)) {
+        if (localTierIdx > 0 && event) {
+          localTierIdx -= 1;
+          event = '⚠️ 跃迁回落：作业表现不佳，未能稳固进阶';
+        } else if (localTierIdx > 0 && !event) {
+          localTierIdx -= 1;
+          event = '📉 课后预警：作业表现较差，动态降级';
+        }
+      }
+
       sectionTiers.push(TIER_LEVELS[localTierIdx]);
+      progressionEvents.push(event);
     }
 
     results.push({
@@ -195,7 +225,8 @@ function processMatrixForChapter(students: StudentData[], chapIdx: number) {
       rawScores: imputedData[i].map(v => Math.round(v * 100) / 100),
       lVector: feature.lVector,
       sVector,
-      sectionTiers
+      sectionTiers,
+      progressionEvents
     });
   }
 
@@ -242,7 +273,8 @@ export function processMathData(students: StudentData[]): MathEngineResult[] {
         rawScore: res.rawScores[idx],
         lScore: res.lVector[idx],
         sScore: res.sVector[idx],
-        tier: res.sectionTiers[idx]
+        tier: res.sectionTiers[idx],
+        progressionEvent: res.progressionEvents[idx]
       }));
 
       knowledgeGraph.push({ 

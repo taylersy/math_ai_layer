@@ -110,6 +110,7 @@ export const StudentProfile: React.FC<Props> = ({ student, selectedBookId }) => 
             value: val,
             tier: studentNode?.tier,
             sScore: studentNode?.sScore,
+            progressionEvent: studentNode?.progressionEvent,
             itemStyle: {
               color: studentNode?.tier ? getColorForTier(studentNode.tier) : (val !== undefined && val !== null ? getColorForScore(val) : '#4b5563')
             }
@@ -156,6 +157,9 @@ export const StudentProfile: React.FC<Props> = ({ student, selectedBookId }) => 
           let tooltipHtml = `<b>${params.data.name}</b><br/>掌握度 (L Score): ${score.toFixed(1)}<br/>掌握层次: <span style="color:${getColorForTier(params.data.tier)}">${params.data.tier}</span>`;
           if (sScore !== undefined) {
              tooltipHtml += `<br/>局部波动 (S): ${sScore}`;
+          }
+          if (params.data.progressionEvent) {
+             tooltipHtml += `<br/><span style="color:#f59e0b;font-weight:bold;">${params.data.progressionEvent}</span>`;
           }
           return tooltipHtml;
         }
