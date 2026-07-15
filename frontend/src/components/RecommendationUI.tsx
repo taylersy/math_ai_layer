@@ -32,7 +32,7 @@ const renderMarkdownWithMath = (text: string) => {
 // 导出为真正的 Word (使用后端的 Pandoc 微服务)
 const exportToWord = async (markdownText: string, title: string) => {
   try {
-    const res = await fetch('http://localhost:8789/api/export/docx', {
+    const res = await fetch('https://math-docx-service.onrender.com/api/export/docx', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ markdown: markdownText, title })
