@@ -330,12 +330,38 @@ app.post('/api/chat/macro', async (c) => {
             tiers[tier] = (tiers[tier] || 0) + 1;
           });
 
-          const statsResult = total > 0 ? {
-            total,
-            avgLScore: Math.round(totalLScore / total),
-            tiers,
-            message: `成功提取数据！总人数: ${total}。请依据此数据生成报告。`
-          } : { error: "当前条件下暂无任何学情数据，请提示教师上传。" };
+          let statsResult;
+          if (total > 0) {
+            statsResult = {
+              total,
+              avgLScore: Math.round(totalLScore / total),
+              tiers,
+              message: `成功提取该特定章节数据！总人数: ${total}。请依据此特定数据生成针对性报告。`
+            };
+          } else {
+            // 如果所查章节没有数据，自动降级为查询全局基底数据
+            let globalFiltered = teacherStudents.map(s => ({ id: s.id, name: s.name, chapters: s.zyrlData || [] })).filter(s => s.chapters.length > 0);
+            const globalMath = processMathData(globalFiltered);
+            let gTotal = globalMath.length;
+            if (gTotal > 0) {
+              let gLScore = 0;
+              let gTiers: any = {};
+              globalMath.forEach(r => { 
+                gLScore += r.base_l_score || 0; 
+                gTiers[r.tier_level] = (gTiers[r.tier_level] || 0) + 1; 
+              });
+              statsResult = {
+                error: `你查询的特定章节/学段目前暂无学情数据（可能由于教师尚未录入该章节）。但是！我已经自动为你提取了该班级的【全局历史综合学情基底】，请基于此全局基底数据（L值和四维层级）以及你作为教研专家的先验知识，来推断和提供这节新课的宏观教学与备课建议：`,
+                globalStats: {
+                  total: gTotal,
+                  avgLScore: Math.round(gLScore / gTotal),
+                  tiers: gTiers
+                }
+              };
+            } else {
+              statsResult = { error: "该班级没有任何学情数据，请提示教师先上传数据。" };
+            }
+          }
 
           apiMessages.push({
             tool_call_id: toolCall.id,
