@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ReactECharts from 'echarts-for-react';
-import { ActivitySquare, Bot, Users, BarChart3, Loader2, Send, User, BrainCircuit } from 'lucide-react';
+import { ActivitySquare, Bot, Users, BarChart3, Loader2, Send, User, BrainCircuit, Copy, Trash2, Check } from 'lucide-react';
 import { marked } from 'marked';
 import { getStudentMetrics } from '../utils/studentMetrics';
 
@@ -19,7 +19,18 @@ export const MacroAnalysis: React.FC<Props> = ({ teacherId, students, selectedBo
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const handleCopy = (content: string, idx: number) => {
+    navigator.clipboard.writeText(content);
+    setCopiedIndex(idx);
+    setTimeout(() => setCopiedIndex(null), 2000);
+  };
+
+  const handleDelete = (idx: number) => {
+    setMessages(prev => prev.filter((_, i) => i !== idx));
+  };
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -188,7 +199,24 @@ export const MacroAnalysis: React.FC<Props> = ({ teacherId, students, selectedBo
                   }`}>
                     {msg.role === 'user' ? msg.content : (
                       msg.content ? (
-                        <div dangerouslySetInnerHTML={{ __html: marked(msg.content) as string }} />
+                        <div className="flex flex-col">
+                          <div dangerouslySetInnerHTML={{ __html: marked(msg.content) as string }} />
+                          <div className="flex items-center gap-4 mt-4 pt-4 border-t border-gray-700/50 text-gray-400">
+                            <button 
+                              onClick={() => handleCopy(msg.content, idx)}
+                              className="flex items-center gap-1.5 hover:text-white transition-colors text-sm"
+                            >
+                              {copiedIndex === idx ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
+                              {copiedIndex === idx ? '已复制' : '复制 Markdown'}
+                            </button>
+                            <button 
+                              onClick={() => handleDelete(idx)}
+                              className="flex items-center gap-1.5 hover:text-red-400 transition-colors text-sm"
+                            >
+                              <Trash2 className="w-4 h-4" /> 删除回答
+                            </button>
+                          </div>
+                        </div>
                       ) : (
                         <div className="flex gap-1.5 items-center h-6">
                           <div className="w-2 h-2 rounded-full bg-blue-400 animate-bounce"></div>
