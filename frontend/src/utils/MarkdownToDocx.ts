@@ -261,7 +261,7 @@ function parseMarkdown(markdown: string, config: ExportConfig): any[] {
         bold?: boolean,
         italic?: boolean,
     } = {}) => {
-        const text = lines.join(' ');
+        const text = lines.join('<br>');
         if (!text.trim()) return null;
 
         const inlineOptions: any = {};
@@ -288,6 +288,9 @@ function parseMarkdown(markdown: string, config: ExportConfig): any[] {
 
         if (options.alignment) {
             paragraphOptions.alignment = options.alignment;
+        } else {
+            // Force left alignment to prevent WPS justify from stretching spaces
+            paragraphOptions.alignment = AlignmentType.LEFT;
         }
 
         return new Paragraph(paragraphOptions);
@@ -403,6 +406,7 @@ function parseMarkdown(markdown: string, config: ExportConfig): any[] {
                 children.push(new Paragraph({
                     children: parseInline(content, inlineOptions),
                     bullet: { level: 0 },
+                    alignment: AlignmentType.LEFT,
                     spacing: {
                         line: Math.round(config.lineSpacing * 240),
                         lineRule: "auto"
