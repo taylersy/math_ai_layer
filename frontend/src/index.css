@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #3b82f6;
+  --color-secondary: #10b981;
+  --color-background-dark: #0f172a;
+  --color-surface-dark: #1e293b;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-background-dark);
+  color: #e2e8f0;
+}
+
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+  .print-hide {
+    display: none !important;
+  }
+  .page-break-before {
+    page-break-before: always;
+  }
+  /* 让图表在打印时背景透明且颜色正常显示 */
+  .printable-area {
+    background: transparent !important;
+    border: none !important;
+    color: black !important;
+  }
+  .printable-area * {
+    color: black !important;
+    text-shadow: none !important;
+  }
+}
