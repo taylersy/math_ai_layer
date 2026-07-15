@@ -11,6 +11,7 @@ export interface SectionScore {
 export interface ChapterScore {
   chapterName: string;
   sections: SectionScore[];
+  unitTest?: any;
 }
 
 export interface StudentData {
@@ -43,7 +44,7 @@ export interface MathEngineResult {
   anomaly_s_score: number;
   anomaly_details: any;
   progression: ChapterProgression[];
-  knowledgeGraph: { chapterName: string, nodes: KnowledgeNode[] }[];
+  knowledgeGraph: { chapterName: string, nodes: KnowledgeNode[], unitTest?: any }[];
 }
 
 function processMatrixForChapter(students: StudentData[], chapIdx: number) {
