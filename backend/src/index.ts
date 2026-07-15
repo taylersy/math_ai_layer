@@ -242,6 +242,7 @@ app.post('/api/chat/macro', async (c) => {
 2. 你必须基于教师的意图，决定是否需要调用工具 \`query_class_stats\` 去数据库中拉取数据。
    - 如果教师询问“八上整体学情”，则调用工具 \`bookId="8a"\`。
    - 如果教师询问“八下第一章学情”，则调用工具 \`bookId="8b", chapterName="第一章 三角形的证明"\`。
+   - 如果教师仅模糊询问“九年级”、“八年级”等且未指定上下册，请默认推断为上册（例如调用 \`bookId="9a"\` 或 \`bookId="8a"\`）。
 3. 获取数据后，仔细阅读返回的班级四维分层数据和全班平均 L 基底，基于这些真实的量化指标，输出宏观学情分析。
 
 [Guidelines]
@@ -261,7 +262,7 @@ app.post('/api/chat/macro', async (c) => {
             properties: {
               bookId: {
                 type: "string",
-                description: "学段的标识符（例如: 7a, 7b, 8a, 8b, 9a, 9b）。如果是全学段传 'all'。"
+                description: "学段的标识符（例如: 7a, 7b, 8a, 8b, 9a, 9b）。如果是全学段传 'all'。如果用户未明确上下册，请默认传上册（如 '9a'）。"
               },
               chapterName: {
                 type: "string",
@@ -305,7 +306,12 @@ app.post('/api/chat/macro', async (c) => {
           let filteredStudents = teacherStudents.map(s => {
             let chapters = s.zyrlData || [];
             if (bookId && bookId !== 'all') {
-              const book = CURRICULUM_BNU.find(b => b.id === bookId);
+              let normalizedBookId = bookId;
+              if (bookId === '7' || bookId === '七年级') normalizedBookId = '7a';
+              if (bookId === '8' || bookId === '八年级') normalizedBookId = '8a';
+              if (bookId === '9' || bookId === '九年级') normalizedBookId = '9a';
+              
+              const book = CURRICULUM_BNU.find(b => b.id === normalizedBookId);
               if (book) {
                 const validChapterNames = book.chapters.map(ch => ch.name);
                 chapters = chapters.filter((c: any) => validChapterNames.includes(c.chapterName));
