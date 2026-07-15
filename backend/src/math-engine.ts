@@ -27,6 +27,8 @@ export interface KnowledgeNode {
   name: string;
   rawScore: number;
   lScore: number;
+  sScore: number;
+  tier: string;
 }
 
 export interface MathEngineResult {
@@ -167,13 +169,33 @@ function processMatrixForChapter(students: StudentData[], chapIdx: number) {
       }
     }
 
+    const sectionTiers = [];
+    const sVector = [];
+    const TIER_LEVELS = ['理解层', '运用层', '表达层', '反思层'];
+    const baseTierIdx = TIER_LEVELS.indexOf(assignedTier);
+
+    for (let j = 0; j < M.columns; j++) {
+      const sVal = S_matrix.get(i, j);
+      sVector.push(Math.round(sVal * 100) / 100);
+      
+      let drop = 0;
+      if (sVal < -25) drop = 3;
+      else if (sVal < -15) drop = 2;
+      else if (sVal < -8) drop = 1;
+
+      const localTierIdx = Math.max(0, baseTierIdx - drop);
+      sectionTiers.push(TIER_LEVELS[localTierIdx]);
+    }
+
     results.push({
       tier: assignedTier,
       lAvg: Math.round(feature.lAvg * 100) / 100,
       minAnomaly: Math.round(feature.minAnomaly * 100) / 100,
       anomalyCol: feature.anomalyCol,
       rawScores: imputedData[i].map(v => Math.round(v * 100) / 100),
-      lVector: feature.lVector
+      lVector: feature.lVector,
+      sVector,
+      sectionTiers
     });
   }
 
@@ -218,7 +240,9 @@ export function processMathData(students: StudentData[]): MathEngineResult[] {
       const nodes: KnowledgeNode[] = student.chapters[c].sections.map((sec, idx) => ({
         name: sec.sectionName,
         rawScore: res.rawScores[idx],
-        lScore: res.lVector[idx]
+        lScore: res.lVector[idx],
+        sScore: res.sVector[idx],
+        tier: res.sectionTiers[idx]
       }));
 
       knowledgeGraph.push({ 

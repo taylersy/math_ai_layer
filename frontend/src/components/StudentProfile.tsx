@@ -47,6 +47,16 @@ export const StudentProfile: React.FC<Props> = ({ student, selectedBookId }) => 
     return '#ef4444'; // 理解层 红
   };
 
+  const getColorForTier = (tier: string) => {
+    switch (tier) {
+      case '反思层': return '#10b981'; // 绿
+      case '表达层': return '#3b82f6'; // 蓝
+      case '运用层': return '#a855f7'; // 紫
+      case '理解层': return '#ef4444'; // 红
+      default: return '#4b5563'; // 灰
+    }
+  };
+
   const getTierForScore = (score: number) => {
     if (score >= 85) return '反思层';
     if (score >= 75) return '表达层';
@@ -98,8 +108,10 @@ export const StudentProfile: React.FC<Props> = ({ student, selectedBookId }) => 
           return {
             name: sec.name,
             value: val,
+            tier: studentNode?.tier,
+            sScore: studentNode?.sScore,
             itemStyle: {
-              color: val !== undefined && val !== null ? getColorForScore(val) : '#4b5563'
+              color: studentNode?.tier ? getColorForTier(studentNode.tier) : (val !== undefined && val !== null ? getColorForScore(val) : '#4b5563')
             }
           };
         });
@@ -137,6 +149,15 @@ export const StudentProfile: React.FC<Props> = ({ student, selectedBookId }) => 
              return `<b>${params.data.name}</b><br/>暂无学情数据`;
           }
           return `<b>${params.data.name}</b><br/>平均得分: ${score.toFixed(1)}<br/>掌握层次: <span style="color:${getColorForScore(score)}">${getTierForScore(score)}</span>`;
+        }
+        if (params.data.tier !== undefined && params.data.tier !== null) {
+          const score = params.data.value;
+          const sScore = params.data.sScore;
+          let tooltipHtml = `<b>${params.data.name}</b><br/>掌握度 (L Score): ${score.toFixed(1)}<br/>掌握层次: <span style="color:${getColorForTier(params.data.tier)}">${params.data.tier}</span>`;
+          if (sScore !== undefined) {
+             tooltipHtml += `<br/>局部波动 (S): ${sScore}`;
+          }
+          return tooltipHtml;
         }
         if (params.data.value !== undefined && params.data.value !== null) {
           const score = params.data.value;
