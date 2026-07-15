@@ -196,21 +196,30 @@ function processMatrixForChapter(students: StudentData[], chapIdx: number) {
       const secData = students[i].chapters[chapIdx].sections[j];
       
       // 1. 课堂任务完成得好 -> 具备升层潜力 (跃迁)
-      if (secData.taskGrade && ['优秀', 'A+', 'A', 'A-'].includes(secData.taskGrade)) {
-        if (localTierIdx < 3) {
+      if (secData.taskGrade) {
+        if (localTierIdx === 0 && ['优秀', '良好', '合格', 'A+', 'A', 'A-', 'B+', 'B'].includes(secData.taskGrade)) {
           localTierIdx += 1;
-          event = '🌟 课中跃迁：课堂任务优秀，展现进阶潜力';
+          event = '🌟 课中跃迁：表现达标，升入运用层';
+        } else if (localTierIdx === 1 && ['优秀', '良好', 'A+', 'A', 'A-', 'B+'].includes(secData.taskGrade)) {
+          localTierIdx += 1;
+          event = '🌟 课中跃迁：表现良好，升入表达层';
+        } else if (localTierIdx === 2 && ['优秀', 'A+', 'A'].includes(secData.taskGrade)) {
+          localTierIdx += 1;
+          event = '🌟 课中跃迁：表现极佳，升入反思层';
         }
       }
       
       // 2. 作业完成得不好 -> 没有巩固住 -> 打回原形或降级
-      if (secData.hwGrade && ['C', '不合格', '未交'].includes(secData.hwGrade)) {
-        if (localTierIdx > 0 && event) {
+      if (secData.hwGrade) {
+        if (localTierIdx === 3 && ['B', 'B-', 'C', '不合格', '未交'].includes(secData.hwGrade)) {
           localTierIdx -= 1;
-          event = '⚠️ 跃迁回落：作业表现不佳，未能稳固进阶';
-        } else if (localTierIdx > 0 && !event) {
+          event = event ? '⚠️ 跃迁回落：作业未能稳固最高层' : '📉 课后预警：作业表现一般，降入表达层';
+        } else if (localTierIdx === 2 && ['B-', 'C', '不合格', '未交'].includes(secData.hwGrade)) {
           localTierIdx -= 1;
-          event = '📉 课后预警：作业表现较差，动态降级';
+          event = event ? '⚠️ 跃迁回落：作业未能稳固进阶' : '📉 课后预警：作业表现不佳，降入运用层';
+        } else if (localTierIdx === 1 && ['C', '不合格', '未交'].includes(secData.hwGrade)) {
+          localTierIdx -= 1;
+          event = event ? '⚠️ 跃迁回落：作业未能及格，打回原形' : '📉 课后预警：作业不合格，降入理解层';
         }
       }
 
