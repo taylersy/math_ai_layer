@@ -312,7 +312,12 @@ app.post('/api/chat/macro', async (c) => {
               }
             }
             if (chapterName && chapterName !== 'all') {
-              chapters = chapters.filter((c: any) => c.chapterName === chapterName || c.chapterName.includes(chapterName));
+              const normalizeStr = (str: string) => str.replace(/[\s的]/g, '');
+              const normalizedQuery = normalizeStr(chapterName);
+              chapters = chapters.filter((c: any) => {
+                const normalizedTarget = normalizeStr(c.chapterName);
+                return normalizedTarget.includes(normalizedQuery) || normalizedQuery.includes(normalizedTarget);
+              });
             }
             return { id: s.id, name: s.name, chapters };
           }).filter(s => s.chapters.length > 0);
