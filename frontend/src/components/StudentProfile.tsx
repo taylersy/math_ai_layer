@@ -59,9 +59,22 @@ export const StudentProfile: React.FC<Props> = ({ student, selectedBookId }) => 
     const chaptersData = student.knowledgeGraph || [];
 
     // 如果选了特定教材，只展示该教材；否则展示全学段（所有教材）
-    const booksToRender = selectedBookId 
+    let booksToRender = (selectedBookId && selectedBookId !== 'all') 
       ? CURRICULUM_BNU.filter(b => b.id === selectedBookId) 
       : CURRICULUM_BNU;
+
+    // 在全学段模式下，为了让知识树更紧凑，过滤掉该学生完全没有数据的学段（比如还没学到的初三教材）
+    if (!selectedBookId || selectedBookId === 'all') {
+      const booksWithData = booksToRender.filter(book => {
+        return book.chapters.some(chapConf => 
+          chaptersData.some(c => c.chapterName === chapConf.name)
+        );
+      });
+      // 只要有任何数据，就只展示有数据的书；如果完全没数据，就兜底展示全部，表现“暂无数据”
+      if (booksWithData.length > 0) {
+        booksToRender = booksWithData;
+      }
+    }
 
     booksToRender.forEach(book => {
       book.chapters.forEach(chapConf => {
