@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bot, Send, User } from 'lucide-react';
+import { marked } from 'marked';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
 
 interface StudentData {
   id: string;
@@ -19,6 +22,30 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
 }
+
+// 解析 markdown 中的数学公式
+const renderMarkdownWithMath = (text: string) => {
+  if (!text) return '';
+  // 先把所有的块级公式 $$...$$ 替换为 katex
+  let processedText = text.replace(/\$\$([\s\S]*?)\$\$/g, (match, math) => {
+    try {
+      return katex.renderToString(math, { displayMode: true, output: 'mathml' });
+    } catch (e) {
+      return match;
+    }
+  });
+
+  // 再替换行内公式 $...$
+  processedText = processedText.replace(/\$((?:\\.|[^$\\])+)\$/g, (match, math) => {
+    try {
+      return katex.renderToString(math, { displayMode: false, output: 'mathml' });
+    } catch (e) {
+      return match;
+    }
+  });
+
+  return marked(processedText) as string;
+};
 
 export const ChatSession: React.FC<Props> = ({ student }) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -133,10 +160,17 @@ export const ChatSession: React.FC<Props> = ({ student }) => {
               }`}>
                 {msg.role === 'user' ? <User className="w-4 h-4 text-gray-300" /> : <Bot className="w-4 h-4 text-primary" />}
               </div>
-              <div className={`p-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
-                msg.role === 'user' ? 'bg-primary text-white rounded-tr-sm' : 'bg-gray-800/60 text-gray-300 border border-gray-700/50 rounded-tl-sm'
+              <div className={`p-3 rounded-2xl text-sm leading-relaxed ${
+                msg.role === 'user' ? 'bg-primary text-white rounded-tr-sm' : 'bg-gray-800/60 text-gray-300 border border-gray-700/50 rounded-tl-sm prose prose-invert prose-sm max-w-none'
               }`}>
-                {msg.content}
+                {msg.role === 'user' ? (
+                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                ) : (
+                  <div 
+                    className="markdown-body" 
+                    dangerouslySetInnerHTML={{ __html: renderMarkdownWithMath(msg.content) }} 
+                  />
+                )}
                 {loading && idx === messages.length - 1 && msg.role === 'assistant' && (
                   <span className="inline-block w-1.5 h-4 ml-1 bg-primary animate-pulse"></span>
                 )}
