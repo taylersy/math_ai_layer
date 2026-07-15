@@ -261,7 +261,7 @@ function parseMarkdown(markdown: string, config: ExportConfig): any[] {
         bold?: boolean,
         italic?: boolean,
     } = {}) => {
-        const text = lines.join(' ');
+        const text = lines.join('<br>');
         if (!text.trim()) return null;
 
         const inlineOptions: any = {};
