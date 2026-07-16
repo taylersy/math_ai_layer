@@ -262,6 +262,7 @@ app.post('/api/chat/macro', async (c) => {
    - ### 一、知识点特性与班级整体态势联动分析
    - ### 二、四维分层精细化诊断（使用表格展示各层级在该知识点上的突破策略）
    - ### 三、宏观教学组织建议
+4. 如果教师在提问中主动询问“学生名单”（如：目前哪些学生在xx章节有问题、我该关注哪些学生），你可以直接根据工具返回的 `studentNamesByTier` 数据，列出基础薄弱（如反思层、表达层）的学生名单，并结合知识点给出针对性的辅导建议。但在常规的宏观学情分析中，除非教师主动询问名单，否则只作宏观数据分析即可。
 `
 
     const tools: any = [
@@ -347,11 +348,16 @@ app.post('/api/chat/macro', async (c) => {
           let total = mathResults.length;
           let totalLScore = 0;
           let tiers: any = {};
+          let studentNamesByTier: any = {};
           
           mathResults.forEach(r => {
             totalLScore += r.base_l_score || 0;
             const tier = r.tier_level;
             tiers[tier] = (tiers[tier] || 0) + 1;
+            if (!studentNamesByTier[tier]) {
+              studentNamesByTier[tier] = [];
+            }
+            studentNamesByTier[tier].push(r.name);
           });
 
           let statsResult;
@@ -360,6 +366,7 @@ app.post('/api/chat/macro', async (c) => {
               total,
               avgLScore: Math.round(totalLScore / total),
               tiers,
+              studentNamesByTier,
               message: `成功提取该特定章节数据！总人数: ${total}。请依据此特定数据生成针对性报告。`
             };
           } else {
@@ -370,16 +377,22 @@ app.post('/api/chat/macro', async (c) => {
             if (gTotal > 0) {
               let gLScore = 0;
               let gTiers: any = {};
+              let gStudentNamesByTier: any = {};
               globalMath.forEach(r => { 
                 gLScore += r.base_l_score || 0; 
                 gTiers[r.tier_level] = (gTiers[r.tier_level] || 0) + 1; 
+                if (!gStudentNamesByTier[r.tier_level]) {
+                  gStudentNamesByTier[r.tier_level] = [];
+                }
+                gStudentNamesByTier[r.tier_level].push(r.name);
               });
               statsResult = {
                 error: `你查询的特定章节/学段目前暂无学情数据（可能由于教师尚未录入该章节）。但是！我已经自动为你提取了该班级的【全局历史综合学情基底】，请基于此全局基底数据（L值和四维层级）以及你作为教研专家的先验知识，来推断和提供这节新课的宏观教学与备课建议：`,
                 globalStats: {
                   total: gTotal,
                   avgLScore: Math.round(gLScore / gTotal),
-                  tiers: gTiers
+                  tiers: gTiers,
+                  studentNamesByTier: gStudentNamesByTier
                 }
               };
             } else {
