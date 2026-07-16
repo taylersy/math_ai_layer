@@ -6,7 +6,7 @@ import { ChatSession } from './components/ChatSession';
 import { ClassTaskRec } from './components/ClassTaskRec';
 import { HomeworkRec } from './components/HomeworkRec';
 import { MacroAnalysis } from './components/MacroAnalysis';
-import { Activity, LayoutDashboard, BookOpen, User } from 'lucide-react';
+import { Infinity, Sparkles, LayoutDashboard, BookOpen, User } from 'lucide-react';
 import { CURRICULUM_BNU } from './curriculum';
 
 interface StudentData {
@@ -91,8 +91,9 @@ function App() {
     return (
       <div className="h-screen flex items-center justify-center bg-[#0b1120] text-gray-200">
         <form onSubmit={handleAuth} className="bg-surface-dark/80 p-8 rounded-2xl border border-gray-800 backdrop-blur-xl w-96 text-center shadow-2xl">
-          <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center border border-primary/30 mx-auto mb-6">
-            <Activity className="w-8 h-8 text-primary" />
+          <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center border border-primary/30 mx-auto mb-6 relative overflow-hidden group">
+            <Infinity className="w-10 h-10 text-primary transition-transform duration-500 group-hover:scale-110" />
+            <Sparkles className="w-4 h-4 text-blue-400 absolute top-3 right-3 animate-pulse" />
           </div>
           <h1 className="text-2xl font-bold mb-2">Math-AI 动态分层智能体</h1>
           <p className="text-gray-400 text-sm mb-6">老师端入口</p>
@@ -139,8 +140,9 @@ function App() {
       {/* Navbar */}
       <nav className="h-14 border-b border-gray-800/80 bg-surface-dark/40 backdrop-blur-md flex-shrink-0 flex items-center justify-between px-6 z-50">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center border border-primary/30">
-            <Activity className="w-5 h-5 text-primary" />
+          <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center border border-primary/30 relative overflow-hidden group">
+            <Infinity className="w-5 h-5 text-primary transition-transform duration-500 group-hover:scale-110" />
+            <Sparkles className="w-2.5 h-2.5 text-blue-400 absolute top-1 right-1 animate-pulse" />
           </div>
           <span className="text-lg font-bold tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
             Math-AI 动态分层智能体
