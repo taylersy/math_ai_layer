@@ -94,7 +94,7 @@ function App() {
           <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center border border-primary/30 mx-auto mb-6">
             <Activity className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold mb-2">常态化教研平台</h1>
+          <h1 className="text-2xl font-bold mb-2">Math-AI 动态分层智能体</h1>
           <p className="text-gray-400 text-sm mb-6">老师端入口</p>
           
           <input 
