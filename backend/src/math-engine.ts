@@ -47,6 +47,79 @@ export interface MathEngineResult {
   knowledgeGraph: { chapterName: string, nodes: KnowledgeNode[], unitTest?: any }[];
 }
 
+/**
+ * Exact RPCA Decomposition via Inexact Augmented Lagrange Multiplier (iALM) Method.
+ * Solves convex optimization: min ||L||_* + lambda * ||S||_1 subject to M = L + S
+ * Ref: Lin, Chen, and Ma (2010), "The Augmented Lagrange Multiplier Method for Exact Recovery of Corrupted Low-Rank Matrices"
+ */
+function solveRPCA_iALM(M: Matrix, maxIter = 30, tol = 1e-5): { L: Matrix; S: Matrix } {
+  const n = M.rows;
+  const m = M.columns;
+  const lambda = 1.0 / Math.sqrt(Math.max(n, m));
+  
+  let L = Matrix.zeros(n, m);
+  let S = Matrix.zeros(n, m);
+  let Y = Matrix.zeros(n, m);
+  
+  const initSvd = new SVD(M, { computeLeftSingularVectors: true, computeRightSingularVectors: true, autoTranspose: true });
+  const norm2 = initSvd.diagonal[0] || 1;
+  let mu = 1.25 / norm2;
+  const muMax = mu * 1e7;
+  const rho = 1.5;
+  
+  const normF_M = Math.sqrt(M.to1DArray().reduce((sum, val) => sum + val * val, 0)) || 1;
+  
+  for (let iter = 0; iter < maxIter; iter++) {
+    // 1. Update L via Singular Value Thresholding (SVT) on (M - S + 1/mu * Y)
+    const tempL = Matrix.sub(M, S).add(Matrix.mul(Y, 1.0 / mu));
+    const svd = new SVD(tempL, { computeLeftSingularVectors: true, computeRightSingularVectors: true, autoTranspose: true });
+    const U = svd.leftSingularVectors;
+    const sDiag = svd.diagonal;
+    const V = svd.rightSingularVectors;
+    
+    const tauL = 1.0 / mu;
+    L = Matrix.zeros(n, m);
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < m; j++) {
+        let val = 0;
+        for (let r = 0; r < sDiag.length; r++) {
+          const sShrink = Math.max(sDiag[r] - tauL, 0);
+          if (sShrink > 0) {
+            val += U.get(i, r) * sShrink * V.get(j, r);
+          }
+        }
+        L.set(i, j, val);
+      }
+    }
+    
+    // 2. Update S via Soft Thresholding (L1 shrinkage) on (M - L + 1/mu * Y)
+    const tempS = Matrix.sub(M, L).add(Matrix.mul(Y, 1.0 / mu));
+    const tauS = lambda / mu;
+    S = Matrix.zeros(n, m);
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < m; j++) {
+        const x = tempS.get(i, j);
+        const shrink = Math.max(Math.abs(x) - tauS, 0);
+        S.set(i, j, Math.sign(x) * shrink);
+      }
+    }
+    
+    // 3. Update Lagrange multiplier matrix Y
+    const diff = Matrix.sub(M, L).sub(S);
+    Y.add(Matrix.mul(diff, mu));
+    
+    // 4. Update penalty parameter mu
+    mu = Math.min(mu * rho, muMax);
+    
+    // 5. Check convergence (Frobenius norm relative error)
+    const err = Math.sqrt(diff.to1DArray().reduce((sum, val) => sum + val * val, 0)) / normF_M;
+    if (err < tol) {
+      break;
+    }
+  }
+  return { L, S };
+}
+
 function processMatrixForChapter(students: StudentData[], chapIdx: number) {
   // Extract scores for this specific chapter across all students
   const numFeatures = students[0].chapters[chapIdx].sections.length;
@@ -82,24 +155,10 @@ function processMatrixForChapter(students: StudentData[], chapIdx: number) {
     imputedData.push(row);
   }
 
-  // 2. RPCA Approximation via truncated SVD
+  // 2. Exact RPCA Decomposition via Inexact Augmented Lagrange Multiplier (iALM) Method
+  // Solves min ||L||_* + lambda * ||S||_1 subject to M = L + S
   const M = new Matrix(imputedData);
-  const svd = new SVD(M, { computeLeftSingularVectors: true, computeRightSingularVectors: true, autoTranspose: true });
-  
-  const U = svd.leftSingularVectors;
-  const S_diag = svd.diagonal;
-  const V = svd.rightSingularVectors;
-  
-  const L = new Matrix(M.rows, M.columns);
-  if (S_diag.length > 0) {
-    for (let i = 0; i < M.rows; i++) {
-      for (let j = 0; j < M.columns; j++) {
-        L.set(i, j, U.get(i, 0) * S_diag[0] * V.get(j, 0));
-      }
-    }
-  }
-
-  const S_matrix = Matrix.sub(M, L);
+  const { L, S: S_matrix } = solveRPCA_iALM(M);
   
   const studentFeatures = [];
   let minL = Infinity;
